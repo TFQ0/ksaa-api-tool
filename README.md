@@ -2,18 +2,6 @@
 
 A modern, interactive web interface for exploring and testing the Falak API endpoints. This tool provides a user-friendly way to interact with KSAA's API services, featuring real-time data visualization and testing capabilities.
 
-![KSAA API Explorer](screenshot.png) *(Add your screenshot here)*
-
-## Features
-
-- 🚀 Interactive API endpoint exploration
-- 📊 Real-time data visualization with table and JSON views
-- 🔑 API key management with local storage
-- 📝 Dynamic parameter handling
-- 📋 Beautiful tabular data display using Tabulator
-- 🎨 Modern, responsive UI design
-- ⚡ Fast and efficient API testing
-
 ## Available Endpoints
 
 The explorer provides access to the following Falak API endpoints:
@@ -40,7 +28,7 @@ The explorer provides access to the following Falak API endpoints:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/ksaa-api-explorer.git
+   git clone https://github.com/TFQ0/ksaa-api-explorer.git
    ```
 
 2. Open `index.html` in your web browser.
@@ -71,43 +59,3 @@ The explorer provides access to the following Falak API endpoints:
    - Switch between Table and Raw JSON views
    - Filter and sort data in the table view
    - Copy raw JSON data for further use
-
-## Keyboard Shortcuts
-
-- `Ctrl/Cmd + Enter`: Execute request
-- `Escape`: Reset parameters
-
-## Dependencies
-
-- [Tabulator](https://tabulator.info/) v5.5.2 - For interactive table display
-
-## Browser Support
-
-The API Explorer is compatible with all modern browsers:
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built for the King Salman Academy for Arabic Language
-- Uses the Falak API services
-- Tabulator library for data visualization
-
-## Support
-
-For support or questions about the API Explorer, please [open an issue](https://github.com/yourusername/ksaa-api-explorer/issues) on GitHub.
-
----
-
-Made with ❤️ for the Arabic language community 
