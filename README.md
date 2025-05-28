@@ -47,15 +47,7 @@ The explorer provides access to the following Falak API endpoints:
    - Click on any endpoint card to view its parameters
    - Each endpoint displays its HTTP method and description
 
-3. **Set Parameters**
-   - Fill in the required parameters (marked with *)
-   - Optional parameters can be left empty
-
-4. **Execute Request**
-   - Click the "Execute Request" button or press Ctrl/Cmd + Enter
-   - View results in either table or JSON format
-
-5. **View Results**
+3. **View Results**
    - Switch between Table and Raw JSON views
    - Filter and sort data in the table view
    - Copy raw JSON data for further use
