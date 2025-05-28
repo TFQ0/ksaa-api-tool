@@ -28,7 +28,7 @@ The explorer provides access to the following Falak API endpoints:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/TFQ0/ksaa-api-explorer.git
+   git clone https://github.com/TFQ0/ksaa-api-tool.git
    ```
 
 2. Open `index.html` in your web browser.
