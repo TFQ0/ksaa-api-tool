@@ -1,6 +1,6 @@
-# KSAA API Explorer
+# Falak API Endpoints
 
-A modern, interactive web interface for exploring and testing the Falak API endpoints. This tool provides a user-friendly way to interact with KSAA's API services, featuring real-time data visualization and testing capabilities.
+A interface for testing the Falak API endpoints. This page provides a user-friendly way to interact with KSAA's API services.
 
 ## Available Endpoints
 
