@@ -1,6 +1,6 @@
-# KSAA API Explorer
+# Falak API Endpoints
 
-A modern, interactive web interface for exploring and testing the Falak API endpoints. This tool provides a user-friendly way to interact with KSAA's API services, featuring real-time data visualization and testing capabilities.
+A interface for testing the Falak API endpoints. This page provides a user-friendly way to interact with KSAA's API services.
 
 ## Available Endpoints
 
@@ -23,6 +23,10 @@ The explorer provides access to the following Falak API endpoints:
   
 - **Corpora** (`GET /v1/external/corpora`)
   - List all available corpora
+
+**custom-search** (`/v1/external/custom-search/`)  
+  - Stem search Api
+
 
 ## Getting Started
 
@@ -49,5 +53,3 @@ The explorer provides access to the following Falak API endpoints:
 
 3. **View Results**
    - Switch between Table and Raw JSON views
-   - Filter and sort data in the table view
-   - Copy raw JSON data for further use
