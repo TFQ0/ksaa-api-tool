@@ -49,7 +49,4 @@ The explorer provides access to the following Falak API endpoints:
 
 3. **View Results**
    - Switch between Table and Raw JSON views
-
-
-   2969f5e8-18ca-4974-acb2-faede8b8eab7
    
