@@ -24,6 +24,10 @@ The explorer provides access to the following Falak API endpoints:
 - **Corpora** (`GET /v1/external/corpora`)
   - List all available corpora
 
+**custom-search** (`/v1/external/custom-search/`)  
+  - Stem search Api
+
+
 ## Getting Started
 
 1. Clone the repository:
