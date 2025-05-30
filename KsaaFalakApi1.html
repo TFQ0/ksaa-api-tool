@@ -296,6 +296,28 @@
             animation: spin 1s linear infinite;
         }
 
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay .spinner {
+            width: 40px;
+            height: 40px;
+        }
+
+        .results-section {
+            position: relative;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -546,6 +568,15 @@
                 placeholder="Enter your API key"
                 value=""
             >
+            <div style="margin-top: 15px;">
+                <input 
+                    type="text" 
+                    id="apiBaseUrl" 
+                    class="api-key-input" 
+                    placeholder="API Base URL (default: https://falak.ksaa.gov.sa/api)"
+                    value="https://falak.ksaa.gov.sa/api"
+                >
+            </div>
         </div>
 
         <!-- Endpoints Section -->
@@ -573,6 +604,9 @@
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+            </div>
             <div class="results-header">
                 <div class="results-tabs">
                     <button class="tab-button active" data-tab="table">Table View</button>
@@ -1007,6 +1041,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadApiKey();
+            loadApiBaseUrl();
             renderEndpoints();
             setupEventListeners();
         });
@@ -1025,6 +1060,20 @@
             localStorage.setItem('ksaa_api_key', apiKey);
         }
 
+        // Load API Base URL from localStorage
+        function loadApiBaseUrl() {
+            const savedUrl = localStorage.getItem('ksaa_api_base_url');
+            if (savedUrl) {
+                document.getElementById('apiBaseUrl').value = savedUrl;
+            }
+        }
+
+        // Save API Base URL to localStorage
+        function saveApiBaseUrl() {
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+            localStorage.setItem('ksaa_api_base_url', apiBaseUrl);
+        }
+
         // Render Endpoint Cards
         function renderEndpoints() {
             const grid = document.getElementById('endpointsGrid');
@@ -1041,6 +1090,9 @@
         function setupEventListeners() {
             // API Key input
             document.getElementById('apiKey').addEventListener('change', saveApiKey);
+
+            // API Base URL input
+            document.getElementById('apiBaseUrl').addEventListener('change', saveApiBaseUrl);
 
             // Endpoint selection
             document.getElementById('endpointsGrid').addEventListener('click', function(e) {
@@ -1123,9 +1175,10 @@
         async function executeRequest() {
             if (!currentEndpoint) return;
 
-            const apiKey = document.getElementById('apiKey').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) {
-                showError('Please enter an API key');
+                showError('API Key is required. Please enter your API key in the configuration section above.', 'Configuration Error');
+                document.getElementById('apiKey').focus();
                 return;
             }
 
@@ -1155,7 +1208,7 @@
 
             try {
                 // Build URL
-                let baseUrl = API_BASE_URL;
+                let baseUrl = document.getElementById('apiBaseUrl').value;
                 
                 let url = baseUrl + currentEndpoint.path;
                 
@@ -1216,10 +1269,21 @@
             const executeBtn = document.getElementById('executeBtn');
             const executeText = document.getElementById('executeText');
             const spinner = document.getElementById('loadingSpinner');
+            const loadingOverlay = document.getElementById('loadingOverlay');
 
             executeBtn.disabled = isLoading;
             executeText.textContent = isLoading ? 'Loading...' : 'Execute Request';
             spinner.style.display = isLoading ? 'inline-block' : 'none';
+            loadingOverlay.style.display = isLoading ? 'flex' : 'none';
+
+            // Clear previous results if starting new request
+            if (isLoading) {
+                document.getElementById('errorContainer').innerHTML = '';
+                if (currentTable) {
+                    currentTable.clearData();
+                }
+                document.getElementById('jsonContent').textContent = '';
+            }
         }
 
         // Show Results
@@ -2084,22 +2148,14 @@
         }
 
         // Show Error
-        function showError(message, status = null) {
+        function showError(message, title = 'Error') {
             const errorContainer = document.getElementById('errorContainer');
             errorContainer.innerHTML = `
                 <div class="error-message">
-                    <strong>Error:</strong> ${message}
+                    <h4>${title}</h4>
+                    <p>${message}</p>
                 </div>
             `;
-
-            // Update status if provided
-            if (status) {
-                const statusIndicator = document.getElementById('statusIndicator');
-                statusIndicator.innerHTML = `
-                    <span class="status-code status-error">Status: ${status}</span>
-                    <span>Request failed</span>
-                `;
-            }
 
             // Show results section to display error
             document.getElementById('resultsSection').style.display = 'block';
@@ -2108,9 +2164,25 @@
         // Show CORS Error with detailed help
         function showCorsError(error) {
             const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `
+                <div class="cors-notice">
+                    <h4>⚠️ Cross-Origin Request Error</h4>
+                    <p>The request to the API failed due to CORS restrictions. This typically happens when:</p>
+                    <ul>
+                        <li>The API server doesn't allow requests from your current domain</li>
+                        <li>The API endpoint is not accessible from a browser directly</li>
+                        <li>There's a network connectivity issue</li>
+                    </ul>
+                    <p>Error details: ${error.message}</p>
+                </div>
+            `;
+
             // Update status
             const statusIndicator = document.getElementById('statusIndicator');
-  
+            statusIndicator.innerHTML = `
+                <span class="status-code status-error">Status: Error</span>
+                <span>CORS Request Failed</span>
+            `;
 
             // Show results section to display error
             document.getElementById('resultsSection').style.display = 'block';
