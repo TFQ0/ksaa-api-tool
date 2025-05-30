@@ -165,12 +165,12 @@
         }
 
         .method-get {
-            background: var(--success);
+            background: var(--primary-light);
             color: white;
         }
 
         .method-post {
-            background: var(--primary-light);
+            background: var(--success);
             color: white;
         }
 
@@ -530,8 +530,8 @@
 <body>
     <div class="header">
         <div class="container">
-            <h1>KSAA API Explorer</h1>
-            <div class="subtitle">Explore Falak API Endpoints with Real-time Data</div>
+            <h1>KSAA API FOR FALAK</h1>
+            <div class="subtitle">Page to test the Falak API and make sure it works</div>
         </div>
     </div>
 
@@ -544,7 +544,7 @@
                 id="apiKey" 
                 class="api-key-input" 
                 placeholder="Enter your API key"
-                value="Enter your API key"
+                value=""
             >
         </div>
 
@@ -603,7 +603,6 @@
 
     <script>
         const API_BASE_URL = 'https://falak.ksaa.gov.sa/api';
-        const DEFAULT_API_KEY = '2969f5e8-18ca-4974-acb2-faede8b8eab7';
         
         // Endpoint Definitions
         const endpoints = [
@@ -624,103 +623,306 @@
             },
             {
                 id: 'ngrams',
-                method: 'GET',
+                method: 'POST',
                 path: '/v1/external/ngrams',
                 description: 'Search for n-grams in the corpus',
                 parameters: [
                     {
-                        name: 'query',
-                        type: 'query',
-                        required: true,
-                        description: 'Search query for n-grams',
-                        example: 'الملك'
-                    },
-                    {
-                        name: 'size',
-                        type: 'query',
-                        required: false,
-                        description: 'Number of results to return',
-                        example: '10'
-                    },
-                    {
                         name: 'corpusId',
-                        type: 'query',
+                        type: 'body',
+                        required: true,
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
+                        name: 'n',
+                        type: 'body',
+                        required: true,
+                        description: 'Size of n-gram',
+                        example: '2'
+                    },
+                    {
+                        name: 'limit',
+                        type: 'body',
                         required: false,
-                        description: 'Filter by corpus ID',
+                        description: 'Maximum number of results to return',
+                        example: '1000'
+                    },
+                    {
+                        name: 'pageNumber',
+                        type: 'body',
+                        required: false,
+                        description: 'Page number for pagination',
+                        example: '0'
+                    },
+                    {
+                        name: 'minFreq',
+                        type: 'body',
+                        required: false,
+                        description: 'Minimum frequency threshold',
+                        example: '2'
+                    },
+                    {
+                        name: 'maxFreq',
+                        type: 'body',
+                        required: false,
+                        description: 'Maximum frequency threshold',
+                        example: '500000'
+                    },
+                    {
+                        name: 'excludeWords',
+                        type: 'body',
+                        required: false,
+                        description: 'Words to exclude from results',
+                        example: '[]'
+                    },
+                    {
+                        name: 'containWords',
+                        type: 'body',
+                        required: false,
+                        description: 'Words that must be contained in results',
+                        example: '["الله"]'
+                    },
+                    {
+                        name: 'startWithWords',
+                        type: 'body',
+                        required: false,
+                        description: 'Words that n-grams must start with',
+                        example: '[]'
+                    },
+                    {
+                        name: 'endWithWords',
+                        type: 'body',
+                        required: false,
+                        description: 'Words that n-grams must end with',
+                        example: '[]'
+                    },
+                    {
+                        name: 'excludeRegex',
+                        type: 'body',
+                        required: false,
+                        description: 'Regular expression pattern to exclude matches',
                         example: '1'
                     }
                 ]
             },
             {
-                id: 'concordance',
-                method: 'GET',
-                path: '/v1/external/concordance',
+                id: 'concordancer',
+                method: 'POST',
+                path: '/v1/external/concordancer',
                 description: 'Search concordance lines',
                 parameters: [
                     {
+                        name: 'corpusId',
+                        type: 'body',
+                        required: true,
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
                         name: 'query',
-                        type: 'query',
+                        type: 'body',
                         required: true,
                         description: 'Search query',
-                        example: 'السعودية'
+                        example: 'string'
                     },
                     {
-                        name: 'size',
-                        type: 'query',
+                        name: 'prevLen',
+                        type: 'body',
                         required: false,
-                        description: 'Number of results',
-                        example: '20'
+                        description: 'Length of previous context',
+                        example: '0'
                     },
                     {
-                        name: 'page',
-                        type: 'query',
+                        name: 'postLen',
+                        type: 'body',
                         required: false,
-                        description: 'Page number',
-                        example: '1'
+                        description: 'Length of post context',
+                        example: '0'
+                    },
+                    {
+                        name: 'domain',
+                        type: 'body',
+                        required: false,
+                        description: 'List of domains to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'location',
+                        type: 'body',
+                        required: false,
+                        description: 'List of locations to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'medium',
+                        type: 'body',
+                        required: false,
+                        description: 'List of mediums to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'subject',
+                        type: 'body',
+                        required: false,
+                        description: 'List of subjects to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'period',
+                        type: 'body',
+                        required: false,
+                        description: 'List of time periods to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'pageNumber',
+                        type: 'body',
+                        required: false,
+                        description: 'Page number for pagination',
+                        example: '0'
+                    },
+                    {
+                        name: 'before',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents before this date',
+                        example: 'string'
+                    },
+                    {
+                        name: 'after',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents after this date',
+                        example: 'string'
                     }
                 ]
             },
             {
                 id: 'collocations',
-                method: 'GET',
+                method: 'POST',
                 path: '/v1/external/collocations',
                 description: 'Find word collocations',
                 parameters: [
                     {
-                        name: 'word',
-                        type: 'query',
+                        name: 'corpusId',
+                        type: 'body',
                         required: true,
-                        description: 'Target word for collocations',
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
+                        name: 'query',
+                        type: 'body',
+                        required: true,
+                        description: 'Search query for collocations',
                         example: 'العربية'
                     },
                     {
-                        name: 'window',
-                        type: 'query',
+                        name: 'prevLen',
+                        type: 'body',
                         required: false,
-                        description: 'Context window size',
-                        example: '5'
+                        description: 'Length of previous context',
+                        example: '0'
+                    },
+                    {
+                        name: 'postLen',
+                        type: 'body',
+                        required: false,
+                        description: 'Length of post context',
+                        example: '0'
+                    },
+                    {
+                        name: 'domain',
+                        type: 'body',
+                        required: false,
+                        description: 'List of domains to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'location',
+                        type: 'body',
+                        required: false,
+                        description: 'List of locations to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'medium',
+                        type: 'body',
+                        required: false,
+                        description: 'List of mediums to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'subject',
+                        type: 'body',
+                        required: false,
+                        description: 'List of subjects to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'period',
+                        type: 'body',
+                        required: false,
+                        description: 'List of time periods to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'pageNumber',
+                        type: 'body',
+                        required: false,
+                        description: 'Page number for pagination',
+                        example: '0'
+                    },
+                    {
+                        name: 'before',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents before this date',
+                        example: 'string'
+                    },
+                    {
+                        name: 'after',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents after this date',
+                        example: 'string'
                     }
                 ]
             },
             {
                 id: 'frequency',
-                method: 'GET',
-                path: '/v1/external/frequency',
-                description: 'Get word frequency data',
+                method: 'POST',
+                path: '/v1/external/most-frequent-words/{corpusId}',
+                description: 'Get most frequent words from a corpus',
                 parameters: [
                     {
-                        name: 'word',
-                        type: 'query',
+                        name: 'corpusId',
+                        type: 'path',
                         required: true,
-                        description: 'Word to analyze',
-                        example: 'المملكة'
+                        description: 'The ID of the corpus',
+                        example: '1'
                     },
                     {
-                        name: 'corpusId',
-                        type: 'query',
+                        name: 'byLemma',
+                        type: 'body',
                         required: false,
-                        description: 'Corpus ID filter',
-                        example: '1'
+                        description: 'Whether to analyze by lemma',
+                        example: true
+                    },
+                    {
+                        name: 'stopWord',
+                        type: 'body',
+                        required: false,
+                        description: 'Whether to include stop words',
+                        example: true
+                    },
+                    {
+                        name: 'excludeRegex',
+                        type: 'body',
+                        required: false,
+                        description: 'Whether to exclude regex matches',
+                        example: true
                     }
                 ]
             },
@@ -730,6 +932,70 @@
                 path: '/v1/external/corpora',
                 description: 'List all available corpora',
                 parameters: []
+            },
+            {
+                id: 'custom-search',
+                method: 'GET',
+                path: '/v1/external/custom-search/{corpusId}',
+                description: 'Get custom search results for corpus id',
+                parameters: [
+                    {
+                        name: 'corpusId',
+                        type: 'path',
+                        required: true,
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
+                        name: 'query',
+                        type: 'query',
+                        required: true,
+                        description: 'Search query',
+                        example: 'string'
+                    },
+                    {
+                        name: 'queryType',
+                        type: 'query',
+                        required: true,
+                        description: 'Type of search query (Available values: verb, noun)',
+                        example: 'verb'
+                    },
+                    {
+                        name: 'medium',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by medium',
+                        example: 'string'
+                    },
+                    {
+                        name: 'domain',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by domain',
+                        example: 'string'
+                    },
+                    {
+                        name: 'period',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by time period',
+                        example: 'string'
+                    },
+                    {
+                        name: 'subject',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by subject',
+                        example: 'string'
+                    },
+                    {
+                        name: 'location',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by location',
+                        example: 'string'
+                    }
+                ]
             }
         ];
 
@@ -973,11 +1239,46 @@
             // Clear error
             document.getElementById('errorContainer').innerHTML = '';
 
-            // Show table view by default
-            switchTab('table');
-
-            // Render table
-            renderTable(data);
+            // Format data for table view based on endpoint
+            if (currentEndpoint && currentEndpoint.id === 'statistics') {
+                const formattedData = [{
+                    metric: 'Records Count',
+                    value: data.recordsCount || 0
+                }, {
+                    metric: 'Sentences Count',
+                    value: data.sentencesCount || 0
+                }, {
+                    metric: 'Unique Words Count',
+                    value: data.uniqueWordsCount || 0
+                }, {
+                    metric: 'Words Count',
+                    value: data.wordsCount || 0
+                }];
+                
+                switchTab('table');
+                renderStatisticsTable(formattedData);
+            } else if (currentEndpoint && currentEndpoint.id === 'corpora') {
+                switchTab('table');
+                renderCorporaTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'frequency') {
+                switchTab('table');
+                renderFrequencyTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'collocations') {
+                switchTab('table');
+                renderCollocationsTable(Array.isArray(data) ? data : [data]);
+            } else if (currentEndpoint && currentEndpoint.id === 'concordancer') {
+                switchTab('table');
+                renderConcordancerTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'ngrams') {
+                switchTab('table');
+                renderNgramsTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'custom-search') {
+                switchTab('table');
+                renderCustomSearchTable(data);
+            } else {
+                switchTab('table');
+                renderTable(data);
+            }
 
             // Update JSON view
             document.getElementById('jsonContent').textContent = JSON.stringify(data, null, 2);
@@ -1048,14 +1349,31 @@
             const columns = [];
             
             for (const [key, value] of Object.entries(sampleData)) {
+                // Skip empty array fields
+                if (Array.isArray(value) && value.length === 0) {
+                    continue;
+                }
+
                 const column = {
-                    title: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+                    title: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
                     field: key,
                     headerFilter: "input",
                     sorter: "string",
                     resizable: true,
-                    minWidth: 100
+                    minWidth: 150
                 };
+
+                // Handle numbers
+                if (typeof value === 'number') {
+                    column.sorter = "number";
+                    column.hozAlign = "right";
+                    column.formatter = "money";
+                    column.formatterParams = {
+                        precision: 0,
+                        thousand: ",",
+                        symbol: ""
+                    };
+                }
 
                 // Handle nested objects
                 if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -1083,6 +1401,674 @@
             }
 
             return columns;
+        }
+
+        // Render Statistics Table
+        function renderStatisticsTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Metric",
+                        field: "metric",
+                        headerFilter: "input",
+                        sorter: "string",
+                        resizable: true,
+                        minWidth: 200
+                    },
+                    {
+                        title: "Value",
+                        field: "value",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: false,
+                movableColumns: true,
+                resizableRows: true,
+                height: "400px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Corpora Table
+        function renderCorporaTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Name",
+                        field: "name",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 250
+                    },
+                    {
+                        title: "ID",
+                        field: "_id",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200
+                    },
+                    {
+                        title: "Type",
+                        field: "type",
+                        headerFilter: "input",
+                        sorter: "string",
+                        formatter: function(cell) {
+                            const types = cell.getValue();
+                            if (Array.isArray(types)) {
+                                return types.join(', ');
+                            }
+                            return types || '';
+                        },
+                        minWidth: 150
+                    },
+                    {
+                        title: "Country",
+                        field: "country",
+                        headerFilter: "input",
+                        sorter: "string",
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        },
+                        minWidth: 150
+                    },
+                    {
+                        title: "Records",
+                        field: "recordsCount",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Words",
+                        field: "wordsCount",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            if (value === null) return '-';
+                            return new Intl.NumberFormat().format(value);
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Unique Words",
+                        field: "uniqueWordsCount",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            if (value === null) return '-';
+                            return new Intl.NumberFormat().format(value);
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Logo",
+                        field: "entityLogo",
+                        headerFilter: false,
+                        formatter: function(cell) {
+                            const logo = cell.getValue();
+                            if (logo && logo.length > 0) {
+                                return `<img src="${logo}" alt="Logo" style="max-height: 30px; max-width: 100px;">`;
+                            }
+                            return '-';
+                        },
+                        minWidth: 120
+                    }
+                ],
+                layout: "fitDataFill",
+                pagination: "local",
+                paginationSize: 10,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "name", dir: "asc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Frequency Table
+        function renderFrequencyTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Word",
+                        field: "word",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200
+                    },
+                    {
+                        title: "Count",
+                        field: "count",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Percentage",
+                        field: "percent",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            return value.toFixed(4) + '%';
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "PPM",
+                        field: "ppm",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 2,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "count", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Collocations Table
+        function renderCollocationsTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Query",
+                        field: "query",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Previous Context",
+                        field: "prevContext",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200,
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        }
+                    },
+                    {
+                        title: "Post Context",
+                        field: "postContext",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200,
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        }
+                    },
+                    {
+                        title: "CP Score",
+                        field: "cp",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 4,
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Sentence ID",
+                        field: "sentenceId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Document ID",
+                        field: "documentId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Record ID",
+                        field: "recordId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Corpus ID",
+                        field: "corpusId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitDataFill",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "cp", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Concordancer Table
+        function renderConcordancerTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Context",
+                        field: "context",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 600,
+                        formatter: function(cell) {
+                            const row = cell.getRow().getData();
+                            const prevContext = row.prevContext || '';
+                            const query = row.query || '';
+                            const postContext = row.postContext || '';
+                            return `<div style="text-align: justify;">
+                                <span style="color: #666;">${prevContext}</span>
+                                <span style="color: #2c3e50; font-weight: bold; background-color: #f1f8ff; padding: 0 4px; margin: 0 4px;">${query}</span>
+                                <span style="color: #666;">${postContext}</span>
+                            </div>`;
+                        }
+                    },
+                    {
+                        title: "CP Score",
+                        field: "cp",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 4,
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Sentence ID",
+                        field: "sentenceId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Document ID",
+                        field: "documentId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Record ID",
+                        field: "recordId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Corpus ID",
+                        field: "corpusId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitDataFill",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "cp", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Ngrams Table
+        function renderNgramsTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "N-gram",
+                        field: "word",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 250
+                    },
+                    {
+                        title: "Count",
+                        field: "count",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Percentage",
+                        field: "percentage",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            return value.toFixed(4) + '%';
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Part of Speech",
+                        field: "pos",
+                        headerFilter: "input",
+                        sorter: "string",
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        },
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "count", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Custom Search Table
+        function renderCustomSearchTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            // Prepare data for tabulation
+            const tabulatedData = [];
+            
+            // Add suffix results
+            if (data.suffix && Array.isArray(data.suffix)) {
+                data.suffix.forEach(item => {
+                    tabulatedData.push({
+                        type: 'Suffix',
+                        word: item.word,
+                        count: item.count
+                    });
+                });
+            }
+            
+            // Add prefix results
+            if (data.prefix && Array.isArray(data.prefix)) {
+                data.prefix.forEach(item => {
+                    tabulatedData.push({
+                        type: 'Prefix',
+                        word: item.word,
+                        count: item.count
+                    });
+                });
+            }
+            
+            // Add suffixAndPrefix results
+            if (data.suffixAndPrefix && Array.isArray(data.suffixAndPrefix)) {
+                data.suffixAndPrefix.forEach(item => {
+                    tabulatedData.push({
+                        type: 'Suffix & Prefix',
+                        word: item.word,
+                        count: item.count
+                    });
+                });
+            }
+
+            if (tabulatedData.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: tabulatedData,
+                columns: [
+                    {
+                        title: "Type",
+                        field: "type",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 120,
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            let color;
+                            switch(value) {
+                                case 'Suffix':
+                                    color = '#3498db';
+                                    break;
+                                case 'Prefix':
+                                    color = '#2ecc71';
+                                    break;
+                                case 'Suffix & Prefix':
+                                    color = '#9b59b6';
+                                    break;
+                                default:
+                                    color = '#95a5a6';
+                            }
+                            return `<span style="color: ${color}; font-weight: 500;">${value}</span>`;
+                        }
+                    },
+                    {
+                        title: "Word",
+                        field: "word",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 250
+                    },
+                    {
+                        title: "Count",
+                        field: "count",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "type", dir: "asc"},
+                    {column: "count", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
         }
 
         // Switch Tab
