@@ -1233,7 +1233,7 @@
                 const response = await fetch(url, {
                     method: currentEndpoint.method,
                     headers: {
-                        'Authorization': `Bearer ${apiKey}`,
+                        'apiKey': apiKey,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
