@@ -434,27 +434,6 @@
             font-size: 13px;
         }
 
-        /* CORS Notice */
-        .cors-notice {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .cors-notice h4 {
-            margin-bottom: 10px;
-            color: #856404;
-        }
-
-        .cors-notice a {
-            color: #533f03;
-            font-weight: bold;
-        }
-
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -1254,8 +1233,6 @@
             } catch (error) {
                 if (error.name === 'AbortError') {
                     showError('Request timeout - please try again');
-                } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-                    showCorsError(error);
                 } else {
                     showError(`Network error: ${error.message}`);
                 }
@@ -2155,33 +2132,6 @@
                     <h4>${title}</h4>
                     <p>${message}</p>
                 </div>
-            `;
-
-            // Show results section to display error
-            document.getElementById('resultsSection').style.display = 'block';
-        }
-
-        // Show CORS Error with detailed help
-        function showCorsError(error) {
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.innerHTML = `
-                <div class="cors-notice">
-                    <h4>⚠️ Cross-Origin Request Error</h4>
-                    <p>The request to the API failed due to CORS restrictions. This typically happens when:</p>
-                    <ul>
-                        <li>The API server doesn't allow requests from your current domain</li>
-                        <li>The API endpoint is not accessible from a browser directly</li>
-                        <li>There's a network connectivity issue</li>
-                    </ul>
-                    <p>Error details: ${error.message}</p>
-                </div>
-            `;
-
-            // Update status
-            const statusIndicator = document.getElementById('statusIndicator');
-            statusIndicator.innerHTML = `
-                <span class="status-code status-error">Status: Error</span>
-                <span>CORS Request Failed</span>
             `;
 
             // Show results section to display error
