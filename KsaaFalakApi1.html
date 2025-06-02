@@ -553,6 +553,26 @@
         .tabulator-row:hover {
             background-color: #e3f2fd !important;
         }
+        .arabic-text {
+            font-family: "Traditional Arabic", "Arabic Typesetting", Arial, sans-serif;
+            font-size: 18px !important;
+            direction: rtl;
+        }
+        .tabulator-row {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .tabulator-cell {
+            padding: 12px 8px !important;
+        }
+        .tabulator-header {
+            font-weight: bold;
+            background-color: #2c3e50 !important;
+            color: white !important;
+        }
+        .tabulator-header .tabulator-col {
+            background-color: #2c3e50 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -663,86 +683,86 @@
             },
             {
                 id: 'ngrams',
-                method: 'POST',
-                path: '/v1/external/ngrams',
+                method: 'GET',
+                path: '/v1/external/ngrams/{corpusId}',
                 description: 'Search for n-grams in the corpus',
                 parameters: [
                     {
                         name: 'corpusId',
-                        type: 'body',
+                        type: 'path',
                         required: true,
                         description: 'The ID of the corpus',
-                        example: 'string'
+                        example: 'babe4d42-221a-4fc1-8ce9-03bd3fa92dc1'
                     },
                     {
                         name: 'n',
-                        type: 'body',
+                        type: 'query',
                         required: true,
-                        description: 'Size of n-gram',
+                        description: 'Size of n-gram (e.g., 2 for bigrams)',
                         example: '2'
                     },
                     {
                         name: 'limit',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Maximum number of results to return',
                         example: '1000'
                     },
                     {
                         name: 'pageNumber',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Page number for pagination',
                         example: '0'
                     },
                     {
                         name: 'minFreq',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Minimum frequency threshold',
                         example: '2'
                     },
                     {
                         name: 'maxFreq',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Maximum frequency threshold',
                         example: '500000'
                     },
                     {
                         name: 'excludeWords',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Words to exclude from results',
                         example: '[]'
                     },
                     {
                         name: 'containWords',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Words that must be contained in results',
                         example: '["الله"]'
                     },
                     {
                         name: 'startWithWords',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Words that n-grams must start with',
                         example: '[]'
                     },
                     {
                         name: 'endWithWords',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Words that n-grams must end with',
                         example: '[]'
                     },
                     {
                         name: 'excludeRegex',
-                        type: 'body',
+                        type: 'query',
                         required: false,
                         description: 'Regular expression pattern to exclude matches',
-                        example: '1'
+                        example: ''
                     }
                 ]
             },
@@ -1322,24 +1342,19 @@
             // Clear error
             document.getElementById('errorContainer').innerHTML = '';
 
+            // Check if response is too large for raw JSON view
+            const jsonSize = JSON.stringify(data).length;
+            if (jsonSize > 1000000) { // 1MB threshold
+                document.getElementById('jsonContent').textContent = 
+                    `Response is too large to display in raw format (${(jsonSize/1024/1024).toFixed(2)}MB). Please use the Table View for better performance.`;
+            } else {
+                document.getElementById('jsonContent').textContent = JSON.stringify(data, null, 2);
+            }
+
             // Format data for table view based on endpoint
             if (currentEndpoint && currentEndpoint.id === 'statistics') {
-                const formattedData = [{
-                    metric: 'Records Count',
-                    value: data.recordsCount || 0
-                }, {
-                    metric: 'Sentences Count',
-                    value: data.sentencesCount || 0
-                }, {
-                    metric: 'Unique Words Count',
-                    value: data.uniqueWordsCount || 0
-                }, {
-                    metric: 'Words Count',
-                    value: data.wordsCount || 0
-                }];
-                
                 switchTab('table');
-                renderStatisticsTable(formattedData);
+                renderStatisticsTable(data);
             } else if (currentEndpoint && currentEndpoint.id === 'corpora') {
                 switchTab('table');
                 renderCorporaTable(data);
@@ -1362,9 +1377,6 @@
                 switchTab('table');
                 renderTable(data);
             }
-
-            // Update JSON view
-            document.getElementById('jsonContent').textContent = JSON.stringify(data, null, 2);
         }
 
         // Render Table
@@ -1491,11 +1503,35 @@
             const tableContainer = document.getElementById('dataTable');
             const emptyState = document.getElementById('emptyState');
 
-            if (!data || data.length === 0) {
+            if (!data) {
                 tableContainer.style.display = 'none';
                 emptyState.style.display = 'block';
                 return;
             }
+
+            // Transform the flat data into rows with meaningful labels
+            const transformedData = [
+                {
+                    metric: "Total Records",
+                    value: data.recordsCount || 0,
+                    description: "Total number of documents in the corpus"
+                },
+                {
+                    metric: "Total Sentences",
+                    value: data.sentencesCount || 0,
+                    description: "Total number of sentences across all documents"
+                },
+                {
+                    metric: "Total Words",
+                    value: data.wordsCount || 0,
+                    description: "Total word count in the corpus"
+                },
+                {
+                    metric: "Unique Words",
+                    value: data.uniqueWordsCount || 0,
+                    description: "Number of distinct words in the corpus"
+                }
+            ];
 
             tableContainer.style.display = 'block';
             emptyState.style.display = 'none';
@@ -1505,17 +1541,17 @@
                 currentTable.destroy();
             }
 
-            // Create new table
+            // Create new table with improved styling
             currentTable = new Tabulator("#dataTable", {
-                data: data,
+                data: transformedData,
                 columns: [
                     {
                         title: "Metric",
                         field: "metric",
                         headerFilter: "input",
                         sorter: "string",
-                        resizable: true,
-                        minWidth: 200
+                        width: "25%",
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Value",
@@ -1529,16 +1565,45 @@
                             thousand: ",",
                             symbol: ""
                         },
-                        minWidth: 150
+                        width: "25%",
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Description",
+                        field: "description",
+                        headerFilter: "input",
+                        sorter: "string",
+                        width: "50%",
+                        cssClass: "dark-text"
                     }
                 ],
                 layout: "fitColumns",
                 pagination: false,
                 movableColumns: true,
-                resizableRows: true,
                 height: "400px",
-                placeholder: "No Data Available"
+                placeholder: "No Data Available",
+                rowFormatter: function(row) {
+                    row.getElement().style.backgroundColor = row.getPosition() % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                }
             });
+
+            // Add summary footer
+            const footerElement = document.createElement('div');
+            footerElement.className = 'tabulator-footer-content';
+            footerElement.style.padding = '16px';
+            footerElement.style.backgroundColor = '#f8f9fa';
+            footerElement.style.borderTop = '2px solid #e0e0e0';
+            footerElement.style.marginTop = '20px';
+            footerElement.innerHTML = `
+                <div style="font-weight: bold; color: #2c3e50;">
+                    Average Words per Document: ${Math.round(data.wordsCount / data.recordsCount).toLocaleString()}
+                    <br>
+                    Average Words per Sentence: ${Math.round(data.wordsCount / data.sentencesCount).toLocaleString()}
+                    <br>
+                    Average Sentences per Document: ${Math.round(data.sentencesCount / data.recordsCount).toLocaleString()}
+                </div>
+            `;
+            tableContainer.appendChild(footerElement);
         }
 
         // Render Corpora Table
@@ -1694,7 +1759,25 @@
             const tableContainer = document.getElementById('dataTable');
             const emptyState = document.getElementById('emptyState');
 
-            if (!data || data.length === 0) {
+            // Add debug logging
+            console.log('Frequency data received:', data);
+
+            if (!data) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            // Ensure data is in array format and handle the response structure
+            let processedData = Array.isArray(data) ? data : (data.results || data.data || []);
+
+            // Add rank to the data
+            processedData = processedData.map((item, index) => ({
+                ...item,
+                rank: index + 1
+            }));
+
+            if (processedData.length === 0) {
                 tableContainer.style.display = 'none';
                 emptyState.style.display = 'block';
                 return;
@@ -1710,14 +1793,24 @@
 
             // Create new table
             currentTable = new Tabulator("#dataTable", {
-                data: data,
+                data: processedData,
                 columns: [
+                    {
+                        title: "Rank",
+                        field: "rank",
+                        width: 80,
+                        headerSort: false,
+                        cssClass: "dark-text",
+                        hozAlign: "center"
+                    },
                     {
                         title: "Word",
                         field: "word",
                         headerFilter: "input",
                         sorter: "string",
-                        minWidth: 200
+                        minWidth: 200,
+                        cssClass: "dark-text arabic-text",
+                        hozAlign: "right"
                     },
                     {
                         title: "Count",
@@ -1731,7 +1824,8 @@
                             thousand: ",",
                             symbol: ""
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Percentage",
@@ -1741,9 +1835,10 @@
                         hozAlign: "right",
                         formatter: function(cell) {
                             const value = cell.getValue();
-                            return value.toFixed(4) + '%';
+                            return value ? value.toFixed(4) + '%' : '0.0000%';
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "PPM",
@@ -1757,19 +1852,24 @@
                             thousand: ",",
                             symbol: ""
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     }
                 ],
                 layout: "fitColumns",
                 pagination: "local",
-                paginationSize: 20,
+                paginationSize: 50,
+                paginationSizeSelector: [25, 50, 100, 200, 500, true],
                 movableColumns: true,
-                resizableRows: true,
+                height: "600px",
+                placeholder: "No Data Available",
                 initialSort: [
                     {column: "count", dir: "desc"}
                 ],
-                height: "600px",
-                placeholder: "No Data Available"
+                rowFormatter: function(row) {
+                    row.getElement().style.backgroundColor = row.getPosition() % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                },
+                footerElement: `<div class="tabulator-footer-content">Total Words: ${processedData.length}</div>`
             });
         }
 
