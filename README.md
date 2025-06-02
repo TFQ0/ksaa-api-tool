@@ -53,8 +53,3 @@ The explorer provides access to the following Falak API endpoints:
 
 3. **View Results**
    - Switch between Table and Raw JSON views
-
-
-
-
-
