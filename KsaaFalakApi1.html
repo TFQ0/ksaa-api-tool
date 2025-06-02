@@ -526,6 +526,33 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        .tabulator-row {
+            background-color: #ffffff !important;
+            color: #333333 !important;
+        }
+        .tabulator-cell {
+            color: #333333 !important;
+        }
+        .dark-text {
+            color: #333333 !important;
+        }
+        .tabulator-header {
+            background-color: #2c3e50 !important;
+        }
+        .tabulator-header .tabulator-col {
+            background-color: #2c3e50 !important;
+            color: #ffffff !important;
+        }
+        .tabulator-row.tabulator-row-even {
+            background-color: #f8f9fa !important;
+        }
+        .tabulator-row.tabulator-row-odd {
+            background-color: #ffffff !important;
+        }
+        .tabulator-row:hover {
+            background-color: #e3f2fd !important;
+        }
     </style>
 </head>
 <body>
@@ -1186,11 +1213,16 @@
             setLoadingState(true);
 
             try {
-                // Build URL
+                // Create headers exactly like Postman
+                const myHeaders = new Headers();
+                myHeaders.append("apiKey", apiKey);
+
+                // Build URL with CORS proxy
                 let baseUrl = document.getElementById('apiBaseUrl').value;
-                
+                // Add CORS proxy
+                baseUrl = 'https://corsproxy.io/?' + encodeURIComponent(baseUrl);
                 let url = baseUrl + currentEndpoint.path;
-                
+
                 // Replace path parameters
                 for (const [key, value] of Object.entries(params)) {
                     if (url.includes(`{${key}}`)) {
@@ -1199,26 +1231,36 @@
                     }
                 }
 
-                // Add query parameters
-                const queryParams = new URLSearchParams(params);
-                if (queryParams.toString()) {
-                    url += '?' + queryParams.toString();
+                // Add query parameters for GET requests
+                if (currentEndpoint.method === 'GET') {
+                    const queryParams = new URLSearchParams();
+                    for (const [key, value] of Object.entries(params)) {
+                        queryParams.append(key, value);
+                    }
+                    if (queryParams.toString()) {
+                        url += '?' + queryParams.toString();
+                    }
                 }
 
-                // Make request
+                // Match Postman's request options
+                const requestOptions = {
+                    method: currentEndpoint.method,
+                    headers: myHeaders,
+                    redirect: "follow",
+                    mode: 'cors' // Explicitly set CORS mode
+                };
+
+                // Add body for POST requests
+                if (currentEndpoint.method === 'POST' && Object.keys(params).length > 0) {
+                    requestOptions.body = JSON.stringify(params);
+                }
+
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-                const response = await fetch(url, {
-                    method: currentEndpoint.method,
-                    headers: {
-                        'apiKey': apiKey,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
+                requestOptions.signal = controller.signal;
 
+                const response = await fetch(url, requestOptions);
                 clearTimeout(timeoutId);
 
                 // Handle response
@@ -1504,6 +1546,9 @@
             const tableContainer = document.getElementById('dataTable');
             const emptyState = document.getElementById('emptyState');
 
+            // Add debug logging
+            console.log('Received data:', data);
+
             if (!data || data.length === 0) {
                 tableContainer.style.display = 'none';
                 emptyState.style.display = 'block';
@@ -1518,7 +1563,7 @@
                 currentTable.destroy();
             }
 
-            // Create new table
+            // Create new table with updated styling
             currentTable = new Tabulator("#dataTable", {
                 data: data,
                 columns: [
@@ -1527,14 +1572,18 @@
                         field: "name",
                         headerFilter: "input",
                         sorter: "string",
-                        minWidth: 250
+                        minWidth: 250,
+                        formatter: "text",
+                        cssClass: "dark-text" // Add CSS class for dark text
                     },
                     {
                         title: "ID",
                         field: "_id",
                         headerFilter: "input",
                         sorter: "string",
-                        minWidth: 200
+                        minWidth: 200,
+                        formatter: "text",
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Type",
@@ -1546,9 +1595,13 @@
                             if (Array.isArray(types)) {
                                 return types.join(', ');
                             }
-                            return types || '';
+                            if (typeof types === 'object' && types !== null) {
+                                return Object.values(types).join(', ');
+                            }
+                            return types || '-';
                         },
-                        minWidth: 150
+                        minWidth: 150,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Country",
@@ -1558,7 +1611,8 @@
                         formatter: function(cell) {
                             return cell.getValue() || '-';
                         },
-                        minWidth: 150
+                        minWidth: 150,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Records",
@@ -1572,7 +1626,8 @@
                             thousand: ",",
                             symbol: ""
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Words",
@@ -1582,10 +1637,11 @@
                         hozAlign: "right",
                         formatter: function(cell) {
                             const value = cell.getValue();
-                            if (value === null) return '-';
+                            if (value === null || value === undefined) return '-';
                             return new Intl.NumberFormat().format(value);
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Unique Words",
@@ -1595,10 +1651,11 @@
                         hozAlign: "right",
                         formatter: function(cell) {
                             const value = cell.getValue();
-                            if (value === null) return '-';
+                            if (value === null || value === undefined) return '-';
                             return new Intl.NumberFormat().format(value);
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     },
                     {
                         title: "Logo",
@@ -1606,12 +1663,13 @@
                         headerFilter: false,
                         formatter: function(cell) {
                             const logo = cell.getValue();
-                            if (logo && logo.length > 0) {
+                            if (logo && typeof logo === 'string' && logo.length > 0) {
                                 return `<img src="${logo}" alt="Logo" style="max-height: 30px; max-width: 100px;">`;
                             }
                             return '-';
                         },
-                        minWidth: 120
+                        minWidth: 120,
+                        cssClass: "dark-text"
                     }
                 ],
                 layout: "fitDataFill",
@@ -1623,7 +1681,11 @@
                     {column: "name", dir: "asc"}
                 ],
                 height: "600px",
-                placeholder: "No Data Available"
+                placeholder: "No Data Available",
+                rowFormatter: function(row) {
+                    // Add background color to rows
+                    row.getElement().style.backgroundColor = "#ffffff";
+                }
             });
         }
 
