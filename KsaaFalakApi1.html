@@ -165,12 +165,12 @@
         }
 
         .method-get {
-            background: var(--success);
+            background: var(--primary-light);
             color: white;
         }
 
         .method-post {
-            background: var(--primary-light);
+            background: var(--success);
             color: white;
         }
 
@@ -296,6 +296,28 @@
             animation: spin 1s linear infinite;
         }
 
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay .spinner {
+            width: 40px;
+            height: 40px;
+        }
+
+        .results-section {
+            position: relative;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -412,27 +434,6 @@
             font-size: 13px;
         }
 
-        /* CORS Notice */
-        .cors-notice {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .cors-notice h4 {
-            margin-bottom: 10px;
-            color: #856404;
-        }
-
-        .cors-notice a {
-            color: #533f03;
-            font-weight: bold;
-        }
-
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -525,6 +526,53 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        .tabulator-row {
+            background-color: #ffffff !important;
+            color: #333333 !important;
+        }
+        .tabulator-cell {
+            color: #333333 !important;
+        }
+        .dark-text {
+            color: #333333 !important;
+        }
+        .tabulator-header {
+            background-color: #2c3e50 !important;
+        }
+        .tabulator-header .tabulator-col {
+            background-color: #2c3e50 !important;
+            color: #ffffff !important;
+        }
+        .tabulator-row.tabulator-row-even {
+            background-color: #f8f9fa !important;
+        }
+        .tabulator-row.tabulator-row-odd {
+            background-color: #ffffff !important;
+        }
+        .tabulator-row:hover {
+            background-color: #e3f2fd !important;
+        }
+        .arabic-text {
+            font-family: "Traditional Arabic", "Arabic Typesetting", Arial, sans-serif;
+            font-size: 18px !important;
+            direction: rtl;
+        }
+        .tabulator-row {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .tabulator-cell {
+            padding: 12px 8px !important;
+        }
+        .tabulator-header {
+            font-weight: bold;
+            background-color: #2c3e50 !important;
+            color: white !important;
+        }
+        .tabulator-header .tabulator-col {
+            background-color: #2c3e50 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -544,8 +592,17 @@
                 id="apiKey" 
                 class="api-key-input" 
                 placeholder="Enter your API key"
-                value="Enter your API key"
+                value=""
             >
+            <div style="margin-top: 15px;">
+                <input 
+                    type="text" 
+                    id="apiBaseUrl" 
+                    class="api-key-input" 
+                    placeholder="API Base URL (default: https://falak.ksaa.gov.sa/api)"
+                    value="https://falak.ksaa.gov.sa/api"
+                >
+            </div>
         </div>
 
         <!-- Endpoints Section -->
@@ -573,6 +630,9 @@
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+            </div>
             <div class="results-header">
                 <div class="results-tabs">
                     <button class="tab-button active" data-tab="table">Table View</button>
@@ -603,7 +663,6 @@
 
     <script>
         const API_BASE_URL = 'https://falak.ksaa.gov.sa/api';
-        const DEFAULT_API_KEY = '2969f5e8-18ca-4974-acb2-faede8b8eab7';
         
         // Endpoint Definitions
         const endpoints = [
@@ -625,102 +684,305 @@
             {
                 id: 'ngrams',
                 method: 'GET',
-                path: '/v1/external/ngrams',
+                path: '/v1/external/ngrams/{corpusId}',
                 description: 'Search for n-grams in the corpus',
                 parameters: [
                     {
-                        name: 'query',
+                        name: 'corpusId',
+                        type: 'path',
+                        required: true,
+                        description: 'The ID of the corpus',
+                        example: 'babe4d42-221a-4fc1-8ce9-03bd3fa92dc1'
+                    },
+                    {
+                        name: 'n',
                         type: 'query',
                         required: true,
-                        description: 'Search query for n-grams',
-                        example: 'الملك'
+                        description: 'Size of n-gram (e.g., 2 for bigrams)',
+                        example: '2'
                     },
                     {
-                        name: 'size',
+                        name: 'limit',
                         type: 'query',
                         required: false,
-                        description: 'Number of results to return',
-                        example: '10'
+                        description: 'Maximum number of results to return',
+                        example: '1000'
                     },
                     {
-                        name: 'corpusId',
+                        name: 'pageNumber',
                         type: 'query',
                         required: false,
-                        description: 'Filter by corpus ID',
-                        example: '1'
+                        description: 'Page number for pagination',
+                        example: '0'
+                    },
+                    {
+                        name: 'minFreq',
+                        type: 'query',
+                        required: false,
+                        description: 'Minimum frequency threshold',
+                        example: '2'
+                    },
+                    {
+                        name: 'maxFreq',
+                        type: 'query',
+                        required: false,
+                        description: 'Maximum frequency threshold',
+                        example: '500000'
+                    },
+                    {
+                        name: 'excludeWords',
+                        type: 'query',
+                        required: false,
+                        description: 'Words to exclude from results',
+                        example: '[]'
+                    },
+                    {
+                        name: 'containWords',
+                        type: 'query',
+                        required: false,
+                        description: 'Words that must be contained in results',
+                        example: '["الله"]'
+                    },
+                    {
+                        name: 'startWithWords',
+                        type: 'query',
+                        required: false,
+                        description: 'Words that n-grams must start with',
+                        example: '[]'
+                    },
+                    {
+                        name: 'endWithWords',
+                        type: 'query',
+                        required: false,
+                        description: 'Words that n-grams must end with',
+                        example: '[]'
+                    },
+                    {
+                        name: 'excludeRegex',
+                        type: 'query',
+                        required: false,
+                        description: 'Regular expression pattern to exclude matches',
+                        example: ''
                     }
                 ]
             },
             {
-                id: 'concordance',
-                method: 'GET',
-                path: '/v1/external/concordance',
+                id: 'concordancer',
+                method: 'POST',
+                path: '/v1/external/concordancer',
                 description: 'Search concordance lines',
                 parameters: [
                     {
+                        name: 'corpusId',
+                        type: 'body',
+                        required: true,
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
                         name: 'query',
-                        type: 'query',
+                        type: 'body',
                         required: true,
                         description: 'Search query',
-                        example: 'السعودية'
+                        example: 'string'
                     },
                     {
-                        name: 'size',
-                        type: 'query',
+                        name: 'prevLen',
+                        type: 'body',
                         required: false,
-                        description: 'Number of results',
-                        example: '20'
+                        description: 'Length of previous context',
+                        example: '0'
                     },
                     {
-                        name: 'page',
-                        type: 'query',
+                        name: 'postLen',
+                        type: 'body',
                         required: false,
-                        description: 'Page number',
-                        example: '1'
+                        description: 'Length of post context',
+                        example: '0'
+                    },
+                    {
+                        name: 'domain',
+                        type: 'body',
+                        required: false,
+                        description: 'List of domains to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'location',
+                        type: 'body',
+                        required: false,
+                        description: 'List of locations to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'medium',
+                        type: 'body',
+                        required: false,
+                        description: 'List of mediums to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'subject',
+                        type: 'body',
+                        required: false,
+                        description: 'List of subjects to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'period',
+                        type: 'body',
+                        required: false,
+                        description: 'List of time periods to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'pageNumber',
+                        type: 'body',
+                        required: false,
+                        description: 'Page number for pagination',
+                        example: '0'
+                    },
+                    {
+                        name: 'before',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents before this date',
+                        example: 'string'
+                    },
+                    {
+                        name: 'after',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents after this date',
+                        example: 'string'
                     }
                 ]
             },
             {
                 id: 'collocations',
-                method: 'GET',
+                method: 'POST',
                 path: '/v1/external/collocations',
                 description: 'Find word collocations',
                 parameters: [
                     {
-                        name: 'word',
-                        type: 'query',
+                        name: 'corpusId',
+                        type: 'body',
                         required: true,
-                        description: 'Target word for collocations',
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
+                        name: 'query',
+                        type: 'body',
+                        required: true,
+                        description: 'Search query for collocations',
                         example: 'العربية'
                     },
                     {
-                        name: 'window',
-                        type: 'query',
+                        name: 'prevLen',
+                        type: 'body',
                         required: false,
-                        description: 'Context window size',
-                        example: '5'
+                        description: 'Length of previous context',
+                        example: '0'
+                    },
+                    {
+                        name: 'postLen',
+                        type: 'body',
+                        required: false,
+                        description: 'Length of post context',
+                        example: '0'
+                    },
+                    {
+                        name: 'domain',
+                        type: 'body',
+                        required: false,
+                        description: 'List of domains to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'location',
+                        type: 'body',
+                        required: false,
+                        description: 'List of locations to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'medium',
+                        type: 'body',
+                        required: false,
+                        description: 'List of mediums to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'subject',
+                        type: 'body',
+                        required: false,
+                        description: 'List of subjects to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'period',
+                        type: 'body',
+                        required: false,
+                        description: 'List of time periods to filter by',
+                        example: '["string"]'
+                    },
+                    {
+                        name: 'pageNumber',
+                        type: 'body',
+                        required: false,
+                        description: 'Page number for pagination',
+                        example: '0'
+                    },
+                    {
+                        name: 'before',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents before this date',
+                        example: 'string'
+                    },
+                    {
+                        name: 'after',
+                        type: 'body',
+                        required: false,
+                        description: 'Filter documents after this date',
+                        example: 'string'
                     }
                 ]
             },
             {
                 id: 'frequency',
-                method: 'GET',
-                path: '/v1/external/frequency',
-                description: 'Get word frequency data',
+                method: 'POST',
+                path: '/v1/external/most-frequent-words/{corpusId}',
+                description: 'Get most frequent words from a corpus',
                 parameters: [
                     {
-                        name: 'word',
-                        type: 'query',
+                        name: 'corpusId',
+                        type: 'path',
                         required: true,
-                        description: 'Word to analyze',
-                        example: 'المملكة'
+                        description: 'The ID of the corpus',
+                        example: '1'
                     },
                     {
-                        name: 'corpusId',
-                        type: 'query',
+                        name: 'byLemma',
+                        type: 'body',
                         required: false,
-                        description: 'Corpus ID filter',
-                        example: '1'
+                        description: 'Whether to analyze by lemma',
+                        example: true
+                    },
+                    {
+                        name: 'stopWord',
+                        type: 'body',
+                        required: false,
+                        description: 'Whether to include stop words',
+                        example: true
+                    },
+                    {
+                        name: 'excludeRegex',
+                        type: 'body',
+                        required: false,
+                        description: 'Whether to exclude regex matches',
+                        example: true
                     }
                 ]
             },
@@ -730,6 +992,70 @@
                 path: '/v1/external/corpora',
                 description: 'List all available corpora',
                 parameters: []
+            },
+            {
+                id: 'custom-search',
+                method: 'GET',
+                path: '/v1/external/custom-search/{corpusId}',
+                description: 'Get custom search results for corpus id',
+                parameters: [
+                    {
+                        name: 'corpusId',
+                        type: 'path',
+                        required: true,
+                        description: 'The ID of the corpus',
+                        example: 'string'
+                    },
+                    {
+                        name: 'query',
+                        type: 'query',
+                        required: true,
+                        description: 'Search query',
+                        example: 'string'
+                    },
+                    {
+                        name: 'queryType',
+                        type: 'query',
+                        required: true,
+                        description: 'Type of search query (Available values: verb, noun)',
+                        example: 'verb'
+                    },
+                    {
+                        name: 'medium',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by medium',
+                        example: 'string'
+                    },
+                    {
+                        name: 'domain',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by domain',
+                        example: 'string'
+                    },
+                    {
+                        name: 'period',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by time period',
+                        example: 'string'
+                    },
+                    {
+                        name: 'subject',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by subject',
+                        example: 'string'
+                    },
+                    {
+                        name: 'location',
+                        type: 'query',
+                        required: false,
+                        description: 'Filter by location',
+                        example: 'string'
+                    }
+                ]
             }
         ];
 
@@ -741,6 +1067,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadApiKey();
+            loadApiBaseUrl();
             renderEndpoints();
             setupEventListeners();
         });
@@ -759,6 +1086,20 @@
             localStorage.setItem('ksaa_api_key', apiKey);
         }
 
+        // Load API Base URL from localStorage
+        function loadApiBaseUrl() {
+            const savedUrl = localStorage.getItem('ksaa_api_base_url');
+            if (savedUrl) {
+                document.getElementById('apiBaseUrl').value = savedUrl;
+            }
+        }
+
+        // Save API Base URL to localStorage
+        function saveApiBaseUrl() {
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+            localStorage.setItem('ksaa_api_base_url', apiBaseUrl);
+        }
+
         // Render Endpoint Cards
         function renderEndpoints() {
             const grid = document.getElementById('endpointsGrid');
@@ -775,6 +1116,9 @@
         function setupEventListeners() {
             // API Key input
             document.getElementById('apiKey').addEventListener('change', saveApiKey);
+
+            // API Base URL input
+            document.getElementById('apiBaseUrl').addEventListener('change', saveApiBaseUrl);
 
             // Endpoint selection
             document.getElementById('endpointsGrid').addEventListener('click', function(e) {
@@ -857,9 +1201,10 @@
         async function executeRequest() {
             if (!currentEndpoint) return;
 
-            const apiKey = document.getElementById('apiKey').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) {
-                showError('Please enter an API key');
+                showError('API Key is required. Please enter your API key in the configuration section above.', 'Configuration Error');
+                document.getElementById('apiKey').focus();
                 return;
             }
 
@@ -888,11 +1233,16 @@
             setLoadingState(true);
 
             try {
-                // Build URL
-                let baseUrl = API_BASE_URL;
-                
+                // Create headers exactly like Postman
+                const myHeaders = new Headers();
+                myHeaders.append("apiKey", apiKey);
+
+                // Build URL with CORS proxy
+                let baseUrl = document.getElementById('apiBaseUrl').value;
+                // Add CORS proxy
+                baseUrl = 'https://corsproxy.io/?' + encodeURIComponent(baseUrl);
                 let url = baseUrl + currentEndpoint.path;
-                
+
                 // Replace path parameters
                 for (const [key, value] of Object.entries(params)) {
                     if (url.includes(`{${key}}`)) {
@@ -901,26 +1251,36 @@
                     }
                 }
 
-                // Add query parameters
-                const queryParams = new URLSearchParams(params);
-                if (queryParams.toString()) {
-                    url += '?' + queryParams.toString();
+                // Add query parameters for GET requests
+                if (currentEndpoint.method === 'GET') {
+                    const queryParams = new URLSearchParams();
+                    for (const [key, value] of Object.entries(params)) {
+                        queryParams.append(key, value);
+                    }
+                    if (queryParams.toString()) {
+                        url += '?' + queryParams.toString();
+                    }
                 }
 
-                // Make request
+                // Match Postman's request options
+                const requestOptions = {
+                    method: currentEndpoint.method,
+                    headers: myHeaders,
+                    redirect: "follow",
+                    mode: 'cors' // Explicitly set CORS mode
+                };
+
+                // Add body for POST requests
+                if (currentEndpoint.method === 'POST' && Object.keys(params).length > 0) {
+                    requestOptions.body = JSON.stringify(params);
+                }
+
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-                const response = await fetch(url, {
-                    method: currentEndpoint.method,
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
+                requestOptions.signal = controller.signal;
 
+                const response = await fetch(url, requestOptions);
                 clearTimeout(timeoutId);
 
                 // Handle response
@@ -935,8 +1295,6 @@
             } catch (error) {
                 if (error.name === 'AbortError') {
                     showError('Request timeout - please try again');
-                } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-                    showCorsError(error);
                 } else {
                     showError(`Network error: ${error.message}`);
                 }
@@ -950,10 +1308,21 @@
             const executeBtn = document.getElementById('executeBtn');
             const executeText = document.getElementById('executeText');
             const spinner = document.getElementById('loadingSpinner');
+            const loadingOverlay = document.getElementById('loadingOverlay');
 
             executeBtn.disabled = isLoading;
             executeText.textContent = isLoading ? 'Loading...' : 'Execute Request';
             spinner.style.display = isLoading ? 'inline-block' : 'none';
+            loadingOverlay.style.display = isLoading ? 'flex' : 'none';
+
+            // Clear previous results if starting new request
+            if (isLoading) {
+                document.getElementById('errorContainer').innerHTML = '';
+                if (currentTable) {
+                    currentTable.clearData();
+                }
+                document.getElementById('jsonContent').textContent = '';
+            }
         }
 
         // Show Results
@@ -973,14 +1342,41 @@
             // Clear error
             document.getElementById('errorContainer').innerHTML = '';
 
-            // Show table view by default
-            switchTab('table');
+            // Check if response is too large for raw JSON view
+            const jsonSize = JSON.stringify(data).length;
+            if (jsonSize > 1000000) { // 1MB threshold
+                document.getElementById('jsonContent').textContent = 
+                    `Response is too large to display in raw format (${(jsonSize/1024/1024).toFixed(2)}MB). Please use the Table View for better performance.`;
+            } else {
+                document.getElementById('jsonContent').textContent = JSON.stringify(data, null, 2);
+            }
 
-            // Render table
-            renderTable(data);
-
-            // Update JSON view
-            document.getElementById('jsonContent').textContent = JSON.stringify(data, null, 2);
+            // Format data for table view based on endpoint
+            if (currentEndpoint && currentEndpoint.id === 'statistics') {
+                switchTab('table');
+                renderStatisticsTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'corpora') {
+                switchTab('table');
+                renderCorporaTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'frequency') {
+                switchTab('table');
+                renderFrequencyTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'collocations') {
+                switchTab('table');
+                renderCollocationsTable(Array.isArray(data) ? data : [data]);
+            } else if (currentEndpoint && currentEndpoint.id === 'concordancer') {
+                switchTab('table');
+                renderConcordancerTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'ngrams') {
+                switchTab('table');
+                renderNgramsTable(data);
+            } else if (currentEndpoint && currentEndpoint.id === 'custom-search') {
+                switchTab('table');
+                renderCustomSearchTable(data);
+            } else {
+                switchTab('table');
+                renderTable(data);
+            }
         }
 
         // Render Table
@@ -1048,14 +1444,31 @@
             const columns = [];
             
             for (const [key, value] of Object.entries(sampleData)) {
+                // Skip empty array fields
+                if (Array.isArray(value) && value.length === 0) {
+                    continue;
+                }
+
                 const column = {
-                    title: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+                    title: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
                     field: key,
                     headerFilter: "input",
                     sorter: "string",
                     resizable: true,
-                    minWidth: 100
+                    minWidth: 150
                 };
+
+                // Handle numbers
+                if (typeof value === 'number') {
+                    column.sorter = "number";
+                    column.hozAlign = "right";
+                    column.formatter = "money";
+                    column.formatterParams = {
+                        precision: 0,
+                        thousand: ",",
+                        symbol: ""
+                    };
+                }
 
                 // Handle nested objects
                 if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -1085,6 +1498,782 @@
             return columns;
         }
 
+        // Render Statistics Table
+        function renderStatisticsTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            // Transform the flat data into rows with meaningful labels
+            const transformedData = [
+                {
+                    metric: "Total Records",
+                    value: data.recordsCount || 0,
+                    description: "Total number of documents in the corpus"
+                },
+                {
+                    metric: "Total Sentences",
+                    value: data.sentencesCount || 0,
+                    description: "Total number of sentences across all documents"
+                },
+                {
+                    metric: "Total Words",
+                    value: data.wordsCount || 0,
+                    description: "Total word count in the corpus"
+                },
+                {
+                    metric: "Unique Words",
+                    value: data.uniqueWordsCount || 0,
+                    description: "Number of distinct words in the corpus"
+                }
+            ];
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table with improved styling
+            currentTable = new Tabulator("#dataTable", {
+                data: transformedData,
+                columns: [
+                    {
+                        title: "Metric",
+                        field: "metric",
+                        headerFilter: "input",
+                        sorter: "string",
+                        width: "25%",
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Value",
+                        field: "value",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        width: "25%",
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Description",
+                        field: "description",
+                        headerFilter: "input",
+                        sorter: "string",
+                        width: "50%",
+                        cssClass: "dark-text"
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: false,
+                movableColumns: true,
+                height: "400px",
+                placeholder: "No Data Available",
+                rowFormatter: function(row) {
+                    row.getElement().style.backgroundColor = row.getPosition() % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                }
+            });
+
+            // Add summary footer
+            const footerElement = document.createElement('div');
+            footerElement.className = 'tabulator-footer-content';
+            footerElement.style.padding = '16px';
+            footerElement.style.backgroundColor = '#f8f9fa';
+            footerElement.style.borderTop = '2px solid #e0e0e0';
+            footerElement.style.marginTop = '20px';
+            footerElement.innerHTML = `
+                <div style="font-weight: bold; color: #2c3e50;">
+                    Average Words per Document: ${Math.round(data.wordsCount / data.recordsCount).toLocaleString()}
+                    <br>
+                    Average Words per Sentence: ${Math.round(data.wordsCount / data.sentencesCount).toLocaleString()}
+                    <br>
+                    Average Sentences per Document: ${Math.round(data.sentencesCount / data.recordsCount).toLocaleString()}
+                </div>
+            `;
+            tableContainer.appendChild(footerElement);
+        }
+
+        // Render Corpora Table
+        function renderCorporaTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            // Add debug logging
+            console.log('Received data:', data);
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table with updated styling
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Name",
+                        field: "name",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 250,
+                        formatter: "text",
+                        cssClass: "dark-text" // Add CSS class for dark text
+                    },
+                    {
+                        title: "ID",
+                        field: "_id",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200,
+                        formatter: "text",
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Type",
+                        field: "type",
+                        headerFilter: "input",
+                        sorter: "string",
+                        formatter: function(cell) {
+                            const types = cell.getValue();
+                            if (Array.isArray(types)) {
+                                return types.join(', ');
+                            }
+                            if (typeof types === 'object' && types !== null) {
+                                return Object.values(types).join(', ');
+                            }
+                            return types || '-';
+                        },
+                        minWidth: 150,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Country",
+                        field: "country",
+                        headerFilter: "input",
+                        sorter: "string",
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        },
+                        minWidth: 150,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Records",
+                        field: "recordsCount",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Words",
+                        field: "wordsCount",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            if (value === null || value === undefined) return '-';
+                            return new Intl.NumberFormat().format(value);
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Unique Words",
+                        field: "uniqueWordsCount",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            if (value === null || value === undefined) return '-';
+                            return new Intl.NumberFormat().format(value);
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Logo",
+                        field: "entityLogo",
+                        headerFilter: false,
+                        formatter: function(cell) {
+                            const logo = cell.getValue();
+                            if (logo && typeof logo === 'string' && logo.length > 0) {
+                                return `<img src="${logo}" alt="Logo" style="max-height: 30px; max-width: 100px;">`;
+                            }
+                            return '-';
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    }
+                ],
+                layout: "fitDataFill",
+                pagination: "local",
+                paginationSize: 10,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "name", dir: "asc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available",
+                rowFormatter: function(row) {
+                    // Add background color to rows
+                    row.getElement().style.backgroundColor = "#ffffff";
+                }
+            });
+        }
+
+        // Render Frequency Table
+        function renderFrequencyTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            // Add debug logging
+            console.log('Frequency data received:', data);
+
+            if (!data) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            // Ensure data is in array format and handle the response structure
+            let processedData = Array.isArray(data) ? data : (data.results || data.data || []);
+
+            // Add rank to the data
+            processedData = processedData.map((item, index) => ({
+                ...item,
+                rank: index + 1
+            }));
+
+            if (processedData.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: processedData,
+                columns: [
+                    {
+                        title: "Rank",
+                        field: "rank",
+                        width: 80,
+                        headerSort: false,
+                        cssClass: "dark-text",
+                        hozAlign: "center"
+                    },
+                    {
+                        title: "Word",
+                        field: "word",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200,
+                        cssClass: "dark-text arabic-text",
+                        hozAlign: "right"
+                    },
+                    {
+                        title: "Count",
+                        field: "count",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "Percentage",
+                        field: "percent",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            return value ? value.toFixed(4) + '%' : '0.0000%';
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    },
+                    {
+                        title: "PPM",
+                        field: "ppm",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 2,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120,
+                        cssClass: "dark-text"
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: "local",
+                paginationSize: 50,
+                paginationSizeSelector: [25, 50, 100, 200, 500, true],
+                movableColumns: true,
+                height: "600px",
+                placeholder: "No Data Available",
+                initialSort: [
+                    {column: "count", dir: "desc"}
+                ],
+                rowFormatter: function(row) {
+                    row.getElement().style.backgroundColor = row.getPosition() % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                },
+                footerElement: `<div class="tabulator-footer-content">Total Words: ${processedData.length}</div>`
+            });
+        }
+
+        // Render Collocations Table
+        function renderCollocationsTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Query",
+                        field: "query",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Previous Context",
+                        field: "prevContext",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200,
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        }
+                    },
+                    {
+                        title: "Post Context",
+                        field: "postContext",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 200,
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        }
+                    },
+                    {
+                        title: "CP Score",
+                        field: "cp",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 4,
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Sentence ID",
+                        field: "sentenceId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Document ID",
+                        field: "documentId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Record ID",
+                        field: "recordId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Corpus ID",
+                        field: "corpusId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitDataFill",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "cp", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Concordancer Table
+        function renderConcordancerTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "Context",
+                        field: "context",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 600,
+                        formatter: function(cell) {
+                            const row = cell.getRow().getData();
+                            const prevContext = row.prevContext || '';
+                            const query = row.query || '';
+                            const postContext = row.postContext || '';
+                            return `<div style="text-align: justify;">
+                                <span style="color: #666;">${prevContext}</span>
+                                <span style="color: #2c3e50; font-weight: bold; background-color: #f1f8ff; padding: 0 4px; margin: 0 4px;">${query}</span>
+                                <span style="color: #666;">${postContext}</span>
+                            </div>`;
+                        }
+                    },
+                    {
+                        title: "CP Score",
+                        field: "cp",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 4,
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Sentence ID",
+                        field: "sentenceId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Document ID",
+                        field: "documentId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Record ID",
+                        field: "recordId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    },
+                    {
+                        title: "Corpus ID",
+                        field: "corpusId",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitDataFill",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "cp", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Ngrams Table
+        function renderNgramsTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!data || data.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: data,
+                columns: [
+                    {
+                        title: "N-gram",
+                        field: "word",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 250
+                    },
+                    {
+                        title: "Count",
+                        field: "count",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Percentage",
+                        field: "percentage",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            return value.toFixed(4) + '%';
+                        },
+                        minWidth: 120
+                    },
+                    {
+                        title: "Part of Speech",
+                        field: "pos",
+                        headerFilter: "input",
+                        sorter: "string",
+                        formatter: function(cell) {
+                            return cell.getValue() || '-';
+                        },
+                        minWidth: 150
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "count", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
+        // Render Custom Search Table
+        function renderCustomSearchTable(data) {
+            const tableContainer = document.getElementById('dataTable');
+            const emptyState = document.getElementById('emptyState');
+
+            // Prepare data for tabulation
+            const tabulatedData = [];
+            
+            // Add suffix results
+            if (data.suffix && Array.isArray(data.suffix)) {
+                data.suffix.forEach(item => {
+                    tabulatedData.push({
+                        type: 'Suffix',
+                        word: item.word,
+                        count: item.count
+                    });
+                });
+            }
+            
+            // Add prefix results
+            if (data.prefix && Array.isArray(data.prefix)) {
+                data.prefix.forEach(item => {
+                    tabulatedData.push({
+                        type: 'Prefix',
+                        word: item.word,
+                        count: item.count
+                    });
+                });
+            }
+            
+            // Add suffixAndPrefix results
+            if (data.suffixAndPrefix && Array.isArray(data.suffixAndPrefix)) {
+                data.suffixAndPrefix.forEach(item => {
+                    tabulatedData.push({
+                        type: 'Suffix & Prefix',
+                        word: item.word,
+                        count: item.count
+                    });
+                });
+            }
+
+            if (tabulatedData.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Destroy existing table
+            if (currentTable) {
+                currentTable.destroy();
+            }
+
+            // Create new table
+            currentTable = new Tabulator("#dataTable", {
+                data: tabulatedData,
+                columns: [
+                    {
+                        title: "Type",
+                        field: "type",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 120,
+                        formatter: function(cell) {
+                            const value = cell.getValue();
+                            let color;
+                            switch(value) {
+                                case 'Suffix':
+                                    color = '#3498db';
+                                    break;
+                                case 'Prefix':
+                                    color = '#2ecc71';
+                                    break;
+                                case 'Suffix & Prefix':
+                                    color = '#9b59b6';
+                                    break;
+                                default:
+                                    color = '#95a5a6';
+                            }
+                            return `<span style="color: ${color}; font-weight: 500;">${value}</span>`;
+                        }
+                    },
+                    {
+                        title: "Word",
+                        field: "word",
+                        headerFilter: "input",
+                        sorter: "string",
+                        minWidth: 250
+                    },
+                    {
+                        title: "Count",
+                        field: "count",
+                        headerFilter: "input",
+                        sorter: "number",
+                        hozAlign: "right",
+                        formatter: "money",
+                        formatterParams: {
+                            precision: 0,
+                            thousand: ",",
+                            symbol: ""
+                        },
+                        minWidth: 120
+                    }
+                ],
+                layout: "fitColumns",
+                pagination: "local",
+                paginationSize: 20,
+                movableColumns: true,
+                resizableRows: true,
+                initialSort: [
+                    {column: "type", dir: "asc"},
+                    {column: "count", dir: "desc"}
+                ],
+                height: "600px",
+                placeholder: "No Data Available"
+            });
+        }
+
         // Switch Tab
         function switchTab(tab) {
             // Update tab buttons
@@ -1098,33 +2287,14 @@
         }
 
         // Show Error
-        function showError(message, status = null) {
+        function showError(message, title = 'Error') {
             const errorContainer = document.getElementById('errorContainer');
             errorContainer.innerHTML = `
                 <div class="error-message">
-                    <strong>Error:</strong> ${message}
+                    <h4>${title}</h4>
+                    <p>${message}</p>
                 </div>
             `;
-
-            // Update status if provided
-            if (status) {
-                const statusIndicator = document.getElementById('statusIndicator');
-                statusIndicator.innerHTML = `
-                    <span class="status-code status-error">Status: ${status}</span>
-                    <span>Request failed</span>
-                `;
-            }
-
-            // Show results section to display error
-            document.getElementById('resultsSection').style.display = 'block';
-        }
-
-        // Show CORS Error with detailed help
-        function showCorsError(error) {
-            const errorContainer = document.getElementById('errorContainer');
-            // Update status
-            const statusIndicator = document.getElementById('statusIndicator');
-  
 
             // Show results section to display error
             document.getElementById('resultsSection').style.display = 'block';
@@ -1145,3 +2315,6 @@
     </script>
 </body>
 </html> 
+
+
+
