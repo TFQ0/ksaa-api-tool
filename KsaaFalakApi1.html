@@ -1239,8 +1239,6 @@
 
                 // Build URL with CORS proxy
                 let baseUrl = document.getElementById('apiBaseUrl').value;
-                // Add CORS proxy
-                baseUrl = 'https://corsproxy.io/?' + encodeURIComponent(baseUrl);
                 let url = baseUrl + currentEndpoint.path;
 
                 // Replace path parameters
