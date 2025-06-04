@@ -603,18 +603,6 @@
                     value="https://falak.ksaa.gov.sa/api"
                 >
             </div>
-            <div style="margin-top: 15px;">
-                <select id="corsProxy" class="api-key-input" style="height: 40px;">
-                    <option value="https://corsproxy.io/?url=">corsproxy.io</option>
-                    <option value="https://cors-anywhere.herokuapp.com/">cors-anywhere.herokuapp.com</option>
-                    <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
-                    <option value="https://proxy.cors.sh/">cors.sh</option>
-                    <option value="">No Proxy (Direct)</option>
-                </select>
-                <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                    Select CORS proxy service. Change only if you experience issues with the default proxy.
-                </div>
-            </div>
         </div>
 
         <!-- Endpoints Section -->
@@ -1025,7 +1013,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadApiKey();
             loadApiBaseUrl();
-            loadCorsProxy();
             renderEndpoints();
             setupEventListeners();
         });
@@ -1058,20 +1045,6 @@
             localStorage.setItem('ksaa_api_base_url', apiBaseUrl);
         }
 
-        // Load CORS Proxy from localStorage
-        function loadCorsProxy() {
-            const savedProxy = localStorage.getItem('ksaa_cors_proxy');
-            if (savedProxy) {
-                document.getElementById('corsProxy').value = savedProxy;
-            }
-        }
-
-        // Save CORS Proxy to localStorage
-        function saveCorsProxy() {
-            const corsProxy = document.getElementById('corsProxy').value;
-            localStorage.setItem('ksaa_cors_proxy', corsProxy);
-        }
-
         // Render Endpoint Cards
         function renderEndpoints() {
             const grid = document.getElementById('endpointsGrid');
@@ -1091,9 +1064,6 @@
 
             // API Base URL input
             document.getElementById('apiBaseUrl').addEventListener('change', saveApiBaseUrl);
-
-            // CORS Proxy selector
-            document.getElementById('corsProxy').addEventListener('change', saveCorsProxy);
 
             // Endpoint selection
             document.getElementById('endpointsGrid').addEventListener('click', function(e) {
@@ -1215,29 +1185,8 @@
                 myHeaders.append("Access-Control-Request-Method", "GET");
                 myHeaders.append("Access-Control-Request-Headers", "apikey");
 
-                // Build URL with selected CORS proxy
+                // Build URL
                 let baseUrl = document.getElementById('apiBaseUrl').value;
-              
-                const corsProxy = document.getElementById('corsProxy').value;
-                
-                // Add CORS proxy if selected
-                if (corsProxy) {
-                    // Handle different proxy URL formats
-                    if (corsProxy.includes('?url=')) {
-                        // For proxies that use ?url= parameter (corsproxy.io, allorigins)
-                        baseUrl = corsProxy + encodeURIComponent(baseUrl);
-                    } else if (corsProxy.includes('cors-anywhere')) {
-                        // For cors-anywhere, just append the URL
-                        baseUrl = corsProxy + baseUrl;
-                    } else if (corsProxy.includes('proxy.cors.sh')) {
-                        // For cors.sh proxy
-                        baseUrl = corsProxy + encodeURIComponent(baseUrl);
-                    } else {
-                        // Default encoding for other proxies
-                        baseUrl = corsProxy + baseUrl;
-                    }
-                }
-  
                 let url = baseUrl + currentEndpoint.path;
 
                 // Replace path parameters
@@ -1285,11 +1234,7 @@
                 const response = await fetch(url, requestOptions);
                 clearTimeout(timeoutId);
 
-                // Check for CORS errors
                 if (!response.ok) {
-                    if (response.status === 0) {
-                        throw new Error('CORS error: The request was blocked due to CORS policy. Try using a different CORS proxy from the dropdown.');
-                    }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
@@ -1297,11 +1242,7 @@
                 showResults(data, response.status);
                 
             } catch (error) {
-                if (error.message.includes('CORS')) {
-                    showError(`CORS Error: ${error.message}. Current proxy: ${corsProxy || 'None'}`, 'CORS Configuration Error');
-                } else {
-                    showError(`Network error: ${error.message}`);
-                }
+                showError(`Network error: ${error.message}`);
             } finally {
                 setLoadingState(false);
             }
