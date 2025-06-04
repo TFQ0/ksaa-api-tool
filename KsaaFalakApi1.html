@@ -1217,6 +1217,7 @@
 
                 // Build URL with selected CORS proxy
                 let baseUrl = document.getElementById('apiBaseUrl').value;
+              
                 const corsProxy = document.getElementById('corsProxy').value;
                 
                 // Add CORS proxy if selected
@@ -1236,7 +1237,7 @@
                         baseUrl = corsProxy + baseUrl;
                     }
                 }
-                
+  
                 let url = baseUrl + currentEndpoint.path;
 
                 // Replace path parameters
