@@ -603,6 +603,18 @@
                     value="https://falak.ksaa.gov.sa/api"
                 >
             </div>
+            <div style="margin-top: 15px;">
+                <select id="corsProxy" class="api-key-input" style="height: 40px;">
+                    <option value="https://corsproxy.io/?url=">corsproxy.io</option>
+                    <option value="https://cors-anywhere.herokuapp.com/">cors-anywhere.herokuapp.com</option>
+                    <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
+                    <option value="https://proxy.cors.sh/">cors.sh</option>
+                    <option value="">No Proxy (Direct)</option>
+                </select>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Select CORS proxy service. Change only if you experience issues with the default proxy.
+                </div>
+            </div>
         </div>
 
         <!-- Endpoints Section -->
@@ -704,7 +716,7 @@
                     {
                         name: 'limit',
                         type: 'query',
-                        required: false,
+                        required: true,
                         description: 'Maximum number of results to return',
                         example: '1000'
                     },
@@ -718,14 +730,14 @@
                     {
                         name: 'minFreq',
                         type: 'query',
-                        required: false,
+                        required: true,
                         description: 'Minimum frequency threshold',
                         example: '2'
                     },
                     {
                         name: 'maxFreq',
                         type: 'query',
-                        required: false,
+                        required: true,
                         description: 'Maximum frequency threshold',
                         example: '500000'
                     },
@@ -739,9 +751,9 @@
                     {
                         name: 'containWords',
                         type: 'query',
-                        required: false,
+                        required: true,
                         description: 'Words that must be contained in results',
-                        example: '["الله"]'
+                        example: 'الله'
                     },
                     {
                         name: 'startWithWords',
@@ -787,75 +799,20 @@
                         example: 'string'
                     },
                     {
-                        name: 'prevLen',
-                        type: 'body',
-                        required: false,
-                        description: 'Length of previous context',
-                        example: '0'
-                    },
-                    {
-                        name: 'postLen',
-                        type: 'body',
-                        required: false,
-                        description: 'Length of post context',
-                        example: '0'
-                    },
-                    {
-                        name: 'domain',
-                        type: 'body',
-                        required: false,
-                        description: 'List of domains to filter by',
-                        example: '["string"]'
-                    },
-                    {
-                        name: 'location',
-                        type: 'body',
-                        required: false,
-                        description: 'List of locations to filter by',
-                        example: '["string"]'
-                    },
-                    {
-                        name: 'medium',
-                        type: 'body',
-                        required: false,
-                        description: 'List of mediums to filter by',
-                        example: '["string"]'
-                    },
-                    {
-                        name: 'subject',
-                        type: 'body',
-                        required: false,
-                        description: 'List of subjects to filter by',
-                        example: '["string"]'
-                    },
-                    {
-                        name: 'period',
-                        type: 'body',
-                        required: false,
-                        description: 'List of time periods to filter by',
-                        example: '["string"]'
-                    },
-                    {
                         name: 'pageNumber',
-                        type: 'body',
-                        required: false,
+                        type: '0',
+                        required: true,
                         description: 'Page number for pagination',
                         example: '0'
                     },
                     {
-                        name: 'before',
-                        type: 'body',
-                        required: false,
-                        description: 'Filter documents before this date',
-                        example: 'string'
-                    },
-                    {
-                        name: 'after',
-                        type: 'body',
-                        required: false,
-                        description: 'Filter documents after this date',
-                        example: 'string'
+                        name: 'pageSize',
+                        type: '999',
+                        required: true,
+                        description: 'Page Size for pagination',
+                        example: '999'
                     }
+                    
                 ]
             },
             {
@@ -1068,6 +1025,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadApiKey();
             loadApiBaseUrl();
+            loadCorsProxy();
             renderEndpoints();
             setupEventListeners();
         });
@@ -1100,6 +1058,20 @@
             localStorage.setItem('ksaa_api_base_url', apiBaseUrl);
         }
 
+        // Load CORS Proxy from localStorage
+        function loadCorsProxy() {
+            const savedProxy = localStorage.getItem('ksaa_cors_proxy');
+            if (savedProxy) {
+                document.getElementById('corsProxy').value = savedProxy;
+            }
+        }
+
+        // Save CORS Proxy to localStorage
+        function saveCorsProxy() {
+            const corsProxy = document.getElementById('corsProxy').value;
+            localStorage.setItem('ksaa_cors_proxy', corsProxy);
+        }
+
         // Render Endpoint Cards
         function renderEndpoints() {
             const grid = document.getElementById('endpointsGrid');
@@ -1119,6 +1091,9 @@
 
             // API Base URL input
             document.getElementById('apiBaseUrl').addEventListener('change', saveApiBaseUrl);
+
+            // CORS Proxy selector
+            document.getElementById('corsProxy').addEventListener('change', saveCorsProxy);
 
             // Endpoint selection
             document.getElementById('endpointsGrid').addEventListener('click', function(e) {
@@ -1233,12 +1208,36 @@
             setLoadingState(true);
 
             try {
-                // Create headers exactly like Postman
+                // Create headers
                 const myHeaders = new Headers();
                 myHeaders.append("apiKey", apiKey);
+                myHeaders.append("Accept", "application/json");
+                myHeaders.append("Access-Control-Request-Method", "GET");
+                myHeaders.append("Access-Control-Request-Headers", "apikey");
 
-                // Build URL with CORS proxy
+                // Build URL with selected CORS proxy
                 let baseUrl = document.getElementById('apiBaseUrl').value;
+              
+                const corsProxy = document.getElementById('corsProxy').value;
+                
+                // Add CORS proxy if selected
+                if (corsProxy) {
+                    // Handle different proxy URL formats
+                    if (corsProxy.includes('?url=')) {
+                        // For proxies that use ?url= parameter (corsproxy.io, allorigins)
+                        baseUrl = corsProxy + encodeURIComponent(baseUrl);
+                    } else if (corsProxy.includes('cors-anywhere')) {
+                        // For cors-anywhere, just append the URL
+                        baseUrl = corsProxy + baseUrl;
+                    } else if (corsProxy.includes('proxy.cors.sh')) {
+                        // For cors.sh proxy
+                        baseUrl = corsProxy + encodeURIComponent(baseUrl);
+                    } else {
+                        // Default encoding for other proxies
+                        baseUrl = corsProxy + baseUrl;
+                    }
+                }
+  
                 let url = baseUrl + currentEndpoint.path;
 
                 // Replace path parameters
@@ -1250,26 +1249,31 @@
                 }
 
                 // Add query parameters for GET requests
-                if (currentEndpoint.method === 'GET') {
+                if (currentEndpoint.method === 'GET' && Object.keys(params).length > 0) {
                     const queryParams = new URLSearchParams();
                     for (const [key, value] of Object.entries(params)) {
                         queryParams.append(key, value);
                     }
                     if (queryParams.toString()) {
-                        url += '?' + queryParams.toString();
+                        url += (url.includes('?') ? '&' : '?') + queryParams.toString();
                     }
                 }
+
+                // Debug URL construction
+                console.log('Final URL:', url);
 
                 // Match Postman's request options
                 const requestOptions = {
                     method: currentEndpoint.method,
                     headers: myHeaders,
                     redirect: "follow",
-                    mode: 'cors' // Explicitly set CORS mode
+                    mode: 'cors',
+                    credentials: 'omit'
                 };
 
                 // Add body for POST requests
                 if (currentEndpoint.method === 'POST' && Object.keys(params).length > 0) {
+                    myHeaders.append("Content-Type", "application/json");
                     requestOptions.body = JSON.stringify(params);
                 }
 
@@ -1281,18 +1285,20 @@
                 const response = await fetch(url, requestOptions);
                 clearTimeout(timeoutId);
 
-                // Handle response
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showResults(data, response.status);
-                } else {
-                    showError(`API Error: ${data.message || 'Unknown error'}`, response.status);
+                // Check for CORS errors
+                if (!response.ok) {
+                    if (response.status === 0) {
+                        throw new Error('CORS error: The request was blocked due to CORS policy. Try using a different CORS proxy from the dropdown.');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
+                
+                const data = await response.json();
+                showResults(data, response.status);
+                
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    showError('Request timeout - please try again');
+                if (error.message.includes('CORS')) {
+                    showError(`CORS Error: ${error.message}. Current proxy: ${corsProxy || 'None'}`, 'CORS Configuration Error');
                 } else {
                     showError(`Network error: ${error.message}`);
                 }
