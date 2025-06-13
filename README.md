@@ -30,16 +30,11 @@ The explorer provides access to the following Falak API endpoints:
 
 ## Getting Started
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/TFQ0/ksaa-api-tool.git
-   ```
+1. Open `KsaaFalakApi1.html` in your web browser.
 
-2. Open `KsaaFalakApi1.html` in your web browser.
+2. Enter your API key in the configuration section.
 
-3. Enter your API key in the configuration section.
-
-4. Select an endpoint and start exploring the API!
+3. Select an endpoint and start exploring the API!
 
 ## Usage
 
