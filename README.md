@@ -27,18 +27,15 @@ The explorer provides access to the following Falak API endpoints:
 - **custom-search** (`/v1/external/custom-search/`)  
   - Stem search Api
 
-## Prerequisites
 
-### CORS Extension Required
+## CORS Extension Required
 
-Due to browser security restrictions (CORS policy), you need to install a browser extension to allow cross-origin requests when testing the API from a local HTML file.
+You need to install a browser extension to allow cross-origin requests when testing the API from a local HTML file.
 
 **📥 Install CORS Extension:**
 
 1. **Download the Extension:**
    - Visit: https://mybrowseraddon.com/access-control-allow-origin.html
-   - Click "Add to Chrome" (or your respective browser)
-   - Follow the installation prompts
 
 2. **Configure the Extension:**
    - After installation, click the extension icon in your browser toolbar
@@ -50,10 +47,6 @@ Due to browser security restrictions (CORS policy), you need to install a browse
    - **Disable it when browsing other websites** for security
    - This extension bypasses important browser security features
 
-**Alternative Browsers:**
-- **Firefox:** Search for "CORS Everywhere" or similar extensions
-- **Edge:** Use Chrome Web Store extensions (same link above)
-- **Safari:** May require different CORS bypass methods
 
 ## Getting Started
 
