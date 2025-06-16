@@ -30,7 +30,7 @@ The explorer provides access to the following Falak API endpoints:
 
 ## CORS Extension Required
 
-You need to install a browser extension to allow cross-origin requests when testing the API from a local HTML file.
+**You need to install a browser extension to allow cross-origin requests when testing the API from a local HTML file.**
 
 **📥 Install CORS Extension:**
 
@@ -48,7 +48,7 @@ You need to install a browser extension to allow cross-origin requests when test
    - This extension bypasses important browser security features
 
 
-## Getting Started
+### Getting Started
 
 1. **Install CORS Extension** (see Prerequisites above)
 
@@ -89,9 +89,4 @@ You need to install a browser extension to allow cross-origin requests when test
 
 - **CORS Error:** Make sure the CORS extension is installed and enabled
 - **401 Unauthorized:** Check that your API key is correct
-- **Network Error:** Verify the API base URL is correct
 - **No Data:** Some endpoints may return empty results based on parameters
-
-**Browser Console:**
-- Press F12 to open developer tools
-- Check the Console tab for detailed error messages
